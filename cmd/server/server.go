@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
+	"cryptic-command/gatewatch/handlers"
 )
 
 const (
@@ -27,8 +29,7 @@ func routing() http.Handler {
 	r := mux.NewRouter()
 
 	// debug handler
-	r.HandleFunc("/__debug", handlers.DebugHandler)
-
+	r.Handle("/transaction", &handlers.TransactionHandler{InteractionHost: *host})
 	return r
 }
 func main() {
