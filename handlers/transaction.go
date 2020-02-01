@@ -15,7 +15,7 @@ type request struct {
 	Resources []json.RawMessage
 	Keys      *keys
 	Interact  *interact
-	Display   []json.RawMessage
+	Display   json.RawMessage
 }
 
 type keys struct {
