@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	jose "gopkg.in/square/go-jose.v2"
@@ -66,14 +67,28 @@ func (h *TransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req request
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	payload, err := ioutil.ReadAll(r.Body)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// TODO: verify RC's possession of key
-	// sign := r.Header.Get(SignatureHeader)
+	var req request
+	if err := json.Unmarshal(payload, &req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sign := r.Header.Get(SignatureHeader)
+	jws, err := jose.ParseDetached(sign, payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if _, err := jws.Verify(req.Keys.JWKs.Keys[0].Key); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var res response
 	if req.Interact.Redirect {
