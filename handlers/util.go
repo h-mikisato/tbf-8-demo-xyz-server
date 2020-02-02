@@ -3,7 +3,20 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/base64"
+	"hash"
+	"io"
 )
+
+func makeInteractionHash(serverNonce, clientNonce, interactionHandle string, hasher hash.Hash) string {
+	io.WriteString(hasher, serverNonce)
+	io.WriteString(hasher, "\n")
+	io.WriteString(hasher, clientNonce)
+	io.WriteString(hasher, "\n")
+	io.WriteString(hasher, interactionHandle)
+	res := hasher.Sum(nil)
+	return base64.RawURLEncoding.EncodeToString(res)
+}
 
 func getNonce() string {
 	return getRandomB32(20)

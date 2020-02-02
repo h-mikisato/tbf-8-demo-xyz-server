@@ -30,6 +30,7 @@ func routing() http.Handler {
 
 	// debug handler
 	r.Handle("/transaction", &handlers.TransactionHandler{InteractionHost: *host})
+	r.Handle("/interact/{handle}", &handlers.InteractionHandler{})
 	return r
 }
 func main() {
