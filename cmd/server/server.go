@@ -33,7 +33,7 @@ func routing() http.Handler {
 	return r
 }
 func main() {
-	log.Println("[INFO] xyz ac server start")
+	log.Println("[INFO] xyz as server start")
 	// parse commandline options
 	flag.Parse()
 
@@ -70,5 +70,5 @@ func main() {
 		log.Println("[INFO] stop listening...")
 	}
 
-	log.Println("[INFO] xyz ac server end")
+	log.Println("[INFO] xyz as server end")
 }
