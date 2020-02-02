@@ -85,7 +85,7 @@ func (h *TransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if _, err := jws.Verify(req.Keys.JWKs.Keys[0].Key); err != nil {
+	if _, err := jws.Verify(req.Keys.JWKs.Keys[0]); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
