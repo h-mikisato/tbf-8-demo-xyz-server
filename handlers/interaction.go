@@ -1,22 +1,25 @@
 package handlers
 
 import (
+	"crypto/sha512"
+	"hash"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/sha3"
+
+	"cryptic-command/gatewatch/models"
+	"cryptic-command/gatewatch/repositories"
 )
 
 const (
 	UserCodeInteractionPath = "device"
-
-	dummyServerNonce = "MBDOFXG4Y5CVJCX821LH"
-	dummyClientNonce = "LKLTI25DK82FX4T4QFZC"
-	dummyResponseURL = "https://client.example.net/return/123455"
 )
 
 type InteractionHandler struct {
+	Repository *repositories.Transaction
 }
 
 func (h *InteractionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,19 +32,65 @@ func (h *InteractionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *InteractionHandler) deviceHandler(w http.ResponseWriter, r *http.Request) {
+	// UserCode with Polling
 	// mock
 }
 
 func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Request, handle string) {
-	responseURL, _ := url.Parse(dummyResponseURL)
+	t, err := h.Repository.GetFromInteraction(handle)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if t.IsExpired(time.Now().UTC()) {
+		h.Repository.Drop(t)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if t.Status != models.WaitingForAuthz {
+		http.Error(w, "transaction is not waiting authorization status", http.StatusBadRequest)
+		return
+	}
+
+	// 本来はここで認証ページを表示し、認証を受けつける。
+	// 以下、認証できた場合
+
+	if t.ResponseURL == "" {
+		// Redirect with Polling
+
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Redirect with Callback
+
+	responseURL, err := url.Parse(t.ResponseURL)
+	if err != nil {
+		h.Repository.Drop(t)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var hasher hash.Hash
+	if t.HashAlgo == "sha2" {
+		hasher = sha512.New()
+	} else {
+		hasher = sha3.New512()
+	}
+
+	interactionRef := getHandle()
+
+	interactionHash := makeInteractionHash(t.ServerNonce, t.ClientNonce, interactionRef, hasher)
+
+	t.Status = models.WaitingForIssuing
+	t.InteractionRef = interactionRef
+	h.Repository.Store(t, t.Handle)
+
 	query := make(url.Values, 2)
-
-	interactionHandle := getHandle()
-	hasher := sha3.New512()
-	interactionHash := makeInteractionHash(dummyServerNonce, dummyClientNonce, interactionHandle, hasher)
-
 	query.Add("hash", interactionHash)
-	query.Add("interaction_handle", interactionHandle)
+	query.Add("interact", interactionRef)
 
 	responseURL.RawQuery = query.Encode()
 

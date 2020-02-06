@@ -11,17 +11,28 @@ const (
 	transactionTimeout = time.Duration(time.Hour * 24 * 30)
 )
 
-type TransactionStatus int
+type (
+	TransactionStatus int
+)
+
+const (
+	Initialized TransactionStatus = iota + 1
+	WaitingForAuthz
+	WaitingForIssuing
+	Issued
+)
 
 type Transaction struct {
-	Status      TransactionStatus
-	ServerNonce string
-	ClientNonce string
-	HashAlgo    string
-	ResponseURL string
-	UserCode    string
-	Key         jose.JSONWebKey
-	LastUpdated time.Time
+	Handle         string
+	Status         TransactionStatus
+	ServerNonce    string
+	ClientNonce    string
+	HashAlgo       string
+	ResponseURL    string
+	InteractionKey string // user_code or interaction URL unique key
+	InteractionRef string
+	Key            jose.JSONWebKey
+	LastUpdated    time.Time
 }
 
 func (t *Transaction) IsExpired(now time.Time) bool {
@@ -40,10 +51,3 @@ func NewTransaction() *Transaction {
 		LastUpdated: time.Now().UTC(),
 	}
 }
-
-const (
-	Initialized TransactionStatus = iota
-	WaitingForAuthz
-	WaitingForIssuing
-	Issued
-)
