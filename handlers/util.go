@@ -33,8 +33,9 @@ func getUserCode() string {
 func getRandomB32(len int) string {
 	var seed = make([]byte, len)
 	var n int
-	for n != len {
-		n, _ = rand.Read(seed)
+	for n < len {
+		c, _ := rand.Read(seed[n:])
+		c += n
 	}
 
 	return base32.StdEncoding.EncodeToString(seed)
