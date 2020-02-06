@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
 	"gopkg.in/square/go-jose.v2"
 )
 
@@ -25,6 +26,12 @@ type Transaction struct {
 
 func (t *Transaction) IsExpired(now time.Time) bool {
 	return now.Sub(t.LastUpdated) > transactionTimeout
+}
+
+func (t *Transaction) Clone() *Transaction {
+	that := &Transaction{}
+	copier.Copy(that, t)
+	return that
 }
 
 func NewTransaction() *Transaction {
