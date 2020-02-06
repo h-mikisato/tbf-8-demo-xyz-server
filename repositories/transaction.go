@@ -12,31 +12,43 @@ var (
 )
 
 type Transaction struct {
-	sync.RWMutex
-	pool map[string]*models.Transaction
+	sync.Mutex
+	pool     map[string]*models.Transaction
+	userCode map[string]string
 }
 
 func (repo *Transaction) Get(handle string) (*models.Transaction, error) {
-	repo.RLock()
-	defer repo.RUnlock()
+	repo.Lock()
+	defer repo.Unlock()
 	t, ok := repo.pool[handle]
-	if ok {
-		return t, nil
+	if !ok {
+		return nil, ErrTransactionNotExists
 	}
-	return nil, ErrTransactionNotExists
-}
-
-func (repo *Transaction) Store(oldHandle, handle string, t *models.Transaction) {
-	repo.Lock()
-	defer repo.Unlock()
-	if oldHandle != "" {
-		delete(repo.pool, oldHandle)
-	}
-	repo.pool[handle] = t
-}
-
-func (repo *Transaction) Drop(handle string) {
-	repo.Lock()
-	defer repo.Unlock()
 	delete(repo.pool, handle)
+	return t, nil
+}
+
+func (repo *Transaction) GetFromUserCode(userCode string) (*models.Transaction, error) {
+	repo.Lock()
+	defer repo.Unlock()
+	handle, ok := repo.userCode[userCode]
+	if !ok {
+		return nil, ErrTransactionNotExists
+	}
+	delete(repo.userCode, userCode)
+	t, ok := repo.pool[handle]
+	if !ok {
+		return nil, ErrTransactionNotExists
+	}
+	delete(repo.pool, handle)
+	return t, nil
+}
+
+func (repo *Transaction) Store(handle string, t *models.Transaction) {
+	repo.Lock()
+	defer repo.Unlock()
+	repo.pool[handle] = t
+	if t.UserCode != "" {
+		repo.userCode[t.UserCode] = handle
+	}
 }
