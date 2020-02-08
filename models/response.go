@@ -5,10 +5,11 @@ type Response struct {
 	ServerNonce    string    `json:",omitempty"`
 	Wait           int       `json:",omitempty"`
 	UserCode       *Usercode `json:",omitempty"`
-	Handle         *Handle   `json:",omitempty"`
+	Handle         *Token    `json:",omitempty"`
+	AccessToken    *Token    `json:",omitempty"`
 }
 
-type Handle struct {
+type Token struct {
 	Value string
 	Type  string
 }

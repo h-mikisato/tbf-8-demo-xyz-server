@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"cryptic-command/gatewatch/handlers"
+	"cryptic-command/gatewatch/repositories"
 )
 
 const (
@@ -23,20 +24,24 @@ const (
 var (
 	port = flag.Uint("port", 3000, "tcp port number to listen and serve.")
 	host = flag.String("host", "localhost:3000", "hostname for making interaction url")
+
+	repo *repositories.Transaction
 )
 
 func routing() http.Handler {
 	r := mux.NewRouter()
 
 	// debug handler
-	r.Handle("/transaction", &handlers.TransactionHandler{InteractionHost: *host})
-	r.Handle("/interact/{handle}", &handlers.InteractionHandler{})
+	r.Handle("/transaction", &handlers.TransactionHandler{InteractionHost: *host, Repository: repo})
+	r.Handle("/interact/{handle}", &handlers.InteractionHandler{Repository: repo})
 	return r
 }
 func main() {
 	log.Println("[INFO] xyz as server start")
 	// parse commandline options
 	flag.Parse()
+
+	repo = repositories.NewTransaction()
 
 	var (
 		serverErrChan = make(chan error, 1)

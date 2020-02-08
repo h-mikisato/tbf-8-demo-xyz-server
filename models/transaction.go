@@ -16,7 +16,7 @@ type (
 )
 
 const (
-	Initialized TransactionStatus = iota + 1
+	Initialized TransactionStatus = iota
 	WaitingForAuthz
 	WaitingForIssuing
 	Issued
@@ -47,7 +47,6 @@ func (t *Transaction) Clone() *Transaction {
 
 func NewTransaction() *Transaction {
 	return &Transaction{
-		Status:      Initialized,
 		LastUpdated: time.Now().UTC(),
 	}
 }

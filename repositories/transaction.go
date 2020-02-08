@@ -17,6 +17,13 @@ type Transaction struct {
 	interactKey map[string]string
 }
 
+func NewTransaction() *Transaction {
+	return &Transaction{
+		pool:        make(map[string]*models.Transaction),
+		interactKey: make(map[string]string),
+	}
+}
+
 func (repo *Transaction) Get(handle string) (*models.Transaction, error) {
 	repo.RLock()
 	defer repo.RUnlock()

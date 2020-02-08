@@ -7,10 +7,12 @@ import (
 )
 
 type Request struct {
-	Resources []json.RawMessage
-	Keys      *Keys
-	Interact  *Interact
-	Display   json.RawMessage
+	Handle      string
+	Resources   []json.RawMessage
+	Keys        *Keys
+	Interact    *Interact
+	InteractRef string
+	Display     json.RawMessage
 }
 
 type Keys struct {
