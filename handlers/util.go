@@ -18,6 +18,10 @@ func makeInteractionHash(serverNonce, clientNonce, interactionHandle string, has
 	return base64.RawURLEncoding.EncodeToString(res)
 }
 
+func getToken() string {
+	return getRandomB32(25)
+}
+
 func getNonce() string {
 	return getRandomB32(20)
 }
@@ -35,7 +39,7 @@ func getRandomB32(len int) string {
 	var n int
 	for n < len {
 		c, _ := rand.Read(seed[n:])
-		c += n
+		n += c
 	}
 
 	return base32.StdEncoding.EncodeToString(seed)
