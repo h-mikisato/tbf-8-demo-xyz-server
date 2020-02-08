@@ -13,6 +13,7 @@ const (
 
 type (
 	TransactionStatus int
+	InteractionType   int
 )
 
 const (
@@ -22,17 +23,24 @@ const (
 	Issued
 )
 
+const (
+	NoInteraction InteractionType = iota
+	RedirectInteraction
+	UserCodeInteraction
+)
+
 type Transaction struct {
-	Handle         string
-	Status         TransactionStatus
-	ServerNonce    string
-	ClientNonce    string
-	HashAlgo       string
-	ResponseURL    string
-	InteractionKey string // user_code or interaction URL unique key
-	InteractionRef string
-	Key            jose.JSONWebKey
-	LastUpdated    time.Time
+	Handle          string
+	Status          TransactionStatus
+	InteractionType InteractionType
+	ServerNonce     string
+	ClientNonce     string
+	HashAlgo        string
+	ResponseURL     string
+	InteractionKey  string // user_code or interaction URL unique key
+	InteractionRef  string
+	Key             jose.JSONWebKey
+	LastUpdated     time.Time
 }
 
 func (t *Transaction) IsExpired(now time.Time) bool {

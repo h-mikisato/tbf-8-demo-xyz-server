@@ -43,6 +43,11 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if t.InteractionType != models.RedirectInteraction {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,6 +64,9 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 
 	if t.ResponseURL == "" {
 		// Redirect with Polling
+
+		t.Status = models.WaitingForIssuing
+		h.Repository.Store(t, "")
 
 		w.WriteHeader(http.StatusOK)
 		return
@@ -86,7 +94,7 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 
 	t.Status = models.WaitingForIssuing
 	t.InteractionRef = interactionRef
-	h.Repository.Store(t, t.Handle)
+	h.Repository.Store(t, "")
 
 	query := make(url.Values, 2)
 	query.Add("hash", interactionHash)

@@ -51,10 +51,14 @@ func (repo *Transaction) GetFromInteraction(interaction string) (*models.Transac
 func (repo *Transaction) Store(t *models.Transaction, oldHandle string) {
 	repo.Lock()
 	defer repo.Unlock()
+	if oldHandle != "" {
+		delete(repo.pool, oldHandle)
+	}
 	repo.pool[t.Handle] = t
 	if t.InteractionKey != "" {
 		repo.interactKey[t.InteractionKey] = t.Handle
 	}
+
 }
 
 func (repo *Transaction) Drop(t *models.Transaction) {
@@ -64,4 +68,10 @@ func (repo *Transaction) Drop(t *models.Transaction) {
 	if t.InteractionKey != "" {
 		delete(repo.interactKey, t.InteractionKey)
 	}
+}
+
+func (repo *Transaction) DropInteractionKey(interactionKey string) {
+	repo.Lock()
+	defer repo.Unlock()
+	delete(repo.interactKey, interactionKey)
 }

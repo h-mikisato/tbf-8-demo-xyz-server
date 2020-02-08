@@ -68,23 +68,24 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 	)
 
 	if req.Interact.Redirect {
+		// Redirect with Callback / Redirect with Polling
+		t.Handle = getHandle()
+		t.InteractionKey = getHandle()
+		t.Status = models.WaitingForAuthz
+		t.InteractionType = models.RedirectInteraction
+		res.InteractionURL = "https://" + h.InteractionHost + "/interact/" + t.InteractionKey
 		if req.Interact.Callback != nil {
-			// Redirect with Callback
-			t.Handle = getHandle()
+			// Redirect with Callback only
 			t.ServerNonce = getNonce()
-			t.InteractionKey = getHandle()
-			t.Status = models.WaitingForAuthz
 			t.ResponseURL = req.Interact.Callback.URI
 			t.ClientNonce = req.Interact.Callback.Nonce
-			res.InteractionURL = "https://" + h.InteractionHost + "/interact/" + t.InteractionKey
 			res.ServerNonce = t.ServerNonce
-		} else {
-			// Redirect with Polling
 		}
 	}
 	if req.Interact.UserCode {
 		t.Handle = getHandle()
 		t.InteractionKey = getUserCode()
+		t.InteractionType = models.UserCodeInteraction
 		res.UserCode = &models.Usercode{
 			URL:  "https://" + h.InteractionHost + "/interact/device",
 			Code: t.InteractionKey,
