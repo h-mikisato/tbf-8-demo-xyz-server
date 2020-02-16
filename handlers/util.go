@@ -1,12 +1,33 @@
 package handlers
 
 import (
+	"bytes"
+	"crypto"
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
 	"hash"
 	"io"
+
+	"gopkg.in/square/go-jose.v2"
 )
+
+func compareKey(this, that jose.JSONWebKey) bool {
+	var (
+		thisP []byte
+		thatP []byte
+		err   error
+	)
+	thisP, err = this.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return false
+	}
+	thatP, err = that.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return false
+	}
+	return bytes.Compare(thisP, thatP) == 0
+}
 
 func makeInteractionHash(serverNonce, clientNonce, interactionHandle string, hasher hash.Hash) string {
 	io.WriteString(hasher, serverNonce)

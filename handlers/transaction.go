@@ -119,6 +119,11 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 		return
 	}
 
+	if !compareKey(t.Key, req.Keys.JWKs.Keys[0]) {
+		http.Error(w, "transaction key is not match", http.StatusBadRequest)
+		return
+	}
+
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
 		http.Error(w, "transaction is expired", http.StatusBadRequest)
