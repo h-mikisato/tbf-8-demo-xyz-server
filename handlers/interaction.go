@@ -50,12 +50,12 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "transaction is expired", http.StatusBadRequest)
 		return
 	}
 
-	if t.Status != models.WaitingForAuthz {
-		http.Error(w, "transaction is not waiting authorization status", http.StatusBadRequest)
+	if t.State != models.WaitingForAuthz {
+		http.Error(w, "transaction is not waiting authorization", http.StatusBadRequest)
 		return
 	}
 
@@ -65,8 +65,11 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 	if t.ResponseURL == "" {
 		// Redirect with Polling
 
-		t.Status = models.WaitingForIssuing
-		h.Repository.Store(t, "")
+		err := h.Repository.UpdateByInteraction(handle, models.WaitingForIssuing, "")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 		return
@@ -92,9 +95,11 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 
 	interactionHash := makeInteractionHash(t.ServerNonce, t.ClientNonce, interactionRef, hasher)
 
-	t.Status = models.WaitingForIssuing
-	t.InteractionRef = interactionRef
-	h.Repository.Store(t, "")
+	err = h.Repository.UpdateByInteraction(handle, models.WaitingForIssuing, interactionRef)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	query := make(url.Values, 2)
 	query.Add("hash", interactionHash)

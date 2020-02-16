@@ -12,12 +12,12 @@ const (
 )
 
 type (
-	TransactionStatus int
-	InteractionType   int
+	TransactionState int
+	InteractionType  int
 )
 
 const (
-	Initialized TransactionStatus = iota
+	Initialized TransactionState = iota
 	WaitingForAuthz
 	WaitingForIssuing
 	Issued
@@ -31,7 +31,7 @@ const (
 
 type Transaction struct {
 	Handle          string
-	Status          TransactionStatus
+	State           TransactionState
 	InteractionType InteractionType
 	ServerNonce     string
 	ClientNonce     string

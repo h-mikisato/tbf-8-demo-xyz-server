@@ -71,7 +71,7 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 		// Redirect with Callback / Redirect with Polling
 		t.Handle = getHandle()
 		t.InteractionKey = getHandle()
-		t.Status = models.WaitingForAuthz
+		t.State = models.WaitingForAuthz
 		t.InteractionType = models.RedirectInteraction
 		res.InteractionURL = "https://" + h.InteractionHost + "/interact/" + t.InteractionKey
 		if req.Interact.Callback != nil {
@@ -101,7 +101,7 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	h.Repository.Store(t, "")
+	h.Repository.Update(t, "")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -121,7 +121,7 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "transaction is expired", http.StatusBadRequest)
 		return
 	}
 
@@ -130,7 +130,7 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 		response  []byte
 		oldHandle = t.Handle
 	)
-	switch t.Status {
+	switch t.State {
 	case models.WaitingForAuthz:
 		t.Handle = getHandle()
 		res.Wait = WaitInterval
@@ -141,7 +141,7 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 
 	case models.WaitingForIssuing:
 		t.Handle = getHandle()
-		t.Status = models.Issued
+		t.State = models.Issued
 		res.Handle = &models.Token{
 			Value: t.Handle,
 			Type:  BearerTokenType,
@@ -168,7 +168,7 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	h.Repository.Store(t, oldHandle)
+	h.Repository.Update(t, oldHandle)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
