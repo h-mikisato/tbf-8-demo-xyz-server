@@ -33,7 +33,7 @@ func (h *InteractionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *InteractionHandler) deviceHandler(w http.ResponseWriter, r *http.Request) {
 	// UserCode with Polling
-	// mock
+	// stub
 }
 
 func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Request, handle string) {
@@ -59,8 +59,10 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	/////////////////////////////////////////////////////
 	// 本来はここで認証ページを表示し、認証を受けつける。
-	// 以下、認証できた場合
+	// 以下、認証できた場合の処理
+	/////////////////////////////////////////////////////
 
 	if t.ResponseURL == "" {
 		// Redirect with Polling

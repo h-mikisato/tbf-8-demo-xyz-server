@@ -145,6 +145,10 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 		}
 
 	case models.WaitingForIssuing:
+		if req.InteractRef != t.InteractionRef {
+			http.Error(w, "not match interact ref", http.StatusBadRequest)
+			return
+		}
 		t.Handle = getHandle()
 		t.State = models.Issued
 		res.Handle = &models.Token{
