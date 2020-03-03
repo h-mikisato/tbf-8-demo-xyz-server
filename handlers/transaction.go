@@ -31,13 +31,15 @@ func (h *TransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	payload, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		// read error
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var req models.Request
 	if err := json.Unmarshal(payload, &req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		// parse error
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -46,11 +48,13 @@ func (h *TransactionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sign := r.Header.Get(SignatureHeader)
 	jws, err := jose.ParseDetached(sign, payload)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		// jws parse error
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if _, err := jws.Verify(req.Keys.JWKs.Keys[0]); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(errorMessage("user_denied"))
 		return
 	}
 
@@ -84,7 +88,7 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 	}
 	if req.Interact.UserCode {
 		// UserCode with Polling
-		// stub
+		// not implemented
 	}
 	res.Handle = &models.Token{
 		Value: t.Handle,
@@ -93,7 +97,7 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 
 	response, err := json.Marshal(res)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	h.Repository.Update(t, "")
@@ -110,18 +114,21 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 	)
 	t, err = h.Repository.Get(req.Handle)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(errorMessage("unknown_transaction"))
 		return
 	}
 
 	if !compareKey(t.Key, req.Keys.JWKs.Keys[0]) {
-		http.Error(w, "transaction key is not match", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(errorMessage("user_denied"))
 		return
 	}
 
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
-		http.Error(w, "transaction is expired", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(errorMessage("expired"))
 		return
 	}
 
@@ -141,7 +148,8 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 
 	case models.WaitingForIssuing:
 		if req.InteractRef != t.InteractionRef {
-			http.Error(w, "not match interact ref", http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(errorMessage("user_denied"))
 			return
 		}
 		t.Handle = getRandomB32(15)

@@ -6,11 +6,18 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/json"
 	"hash"
 	"io"
 
 	"gopkg.in/square/go-jose.v2"
 )
+
+func errorMessage(message string) []byte {
+	errobj := map[string]string{"error": message}
+	errMsg, _ := json.Marshal(errobj)
+	return errMsg
+}
 
 func compareKey(this, that jose.JSONWebKey) bool {
 	var (

@@ -33,7 +33,7 @@ func (h *InteractionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *InteractionHandler) deviceHandler(w http.ResponseWriter, r *http.Request) {
 	// UserCode with Polling
-	// stub
+	// not implemented
 }
 
 func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Request, handle string) {
@@ -50,12 +50,12 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 
 	if t.IsExpired(time.Now().UTC()) {
 		h.Repository.Drop(t)
-		http.Error(w, "transaction is expired", http.StatusBadRequest)
+		http.Error(w, "expired", http.StatusBadRequest)
 		return
 	}
 
 	if t.State != models.WaitingForAuthz {
-		http.Error(w, "transaction is not waiting authorization", http.StatusBadRequest)
+		http.Error(w, "invalid status", http.StatusBadRequest)
 		return
 	}
 
