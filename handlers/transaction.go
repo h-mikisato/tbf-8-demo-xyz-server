@@ -69,27 +69,22 @@ func (h *TransactionHandler) firstTransaction(w http.ResponseWriter, req *models
 
 	if req.Interact.Redirect {
 		// Redirect with Callback / Redirect with Polling
-		t.Handle = getHandle()
-		t.InteractionKey = getHandle()
+		t.Handle = getRandomB32(15)
+		t.InteractionKey = getRandomB32(15)
 		t.State = models.WaitingForAuthz
 		t.InteractionType = models.RedirectInteraction
 		res.InteractionURL = "https://" + h.InteractionHost + "/interact/" + t.InteractionKey
 		if req.Interact.Callback != nil {
 			// Redirect with Callback only
-			t.ServerNonce = getNonce()
+			t.ServerNonce = getRandomB32(20)
 			t.ResponseURL = req.Interact.Callback.URI
 			t.ClientNonce = req.Interact.Callback.Nonce
 			res.ServerNonce = t.ServerNonce
 		}
 	}
 	if req.Interact.UserCode {
-		t.Handle = getHandle()
-		t.InteractionKey = getUserCode()
-		t.InteractionType = models.UserCodeInteraction
-		res.UserCode = &models.Usercode{
-			URL:  "https://" + h.InteractionHost + "/interact/device",
-			Code: t.InteractionKey,
-		}
+		// UserCode with Polling
+		// stub
 	}
 	res.Handle = &models.Token{
 		Value: t.Handle,
@@ -137,7 +132,7 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 	)
 	switch t.State {
 	case models.WaitingForAuthz:
-		t.Handle = getHandle()
+		t.Handle = getRandomB32(15)
 		res.Wait = WaitInterval
 		res.Handle = &models.Token{
 			Value: t.Handle,
@@ -149,25 +144,25 @@ func (h *TransactionHandler) handleState(w http.ResponseWriter, req *models.Requ
 			http.Error(w, "not match interact ref", http.StatusBadRequest)
 			return
 		}
-		t.Handle = getHandle()
+		t.Handle = getRandomB32(15)
 		t.State = models.Issued
 		res.Handle = &models.Token{
 			Value: t.Handle,
 			Type:  BearerTokenType,
 		}
 		res.AccessToken = &models.Token{
-			Value: getToken(),
+			Value: getRandomB32(25),
 			Type:  BearerTokenType,
 		}
 
 	case models.Issued:
-		t.Handle = getHandle()
+		t.Handle = getRandomB32(15)
 		res.Handle = &models.Token{
 			Value: t.Handle,
 			Type:  BearerTokenType,
 		}
 		res.AccessToken = &models.Token{
-			Value: getToken(),
+			Value: getRandomB32(25),
 			Type:  BearerTokenType,
 		}
 	}

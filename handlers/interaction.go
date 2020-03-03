@@ -93,7 +93,7 @@ func (h *InteractionHandler) redirectHandler(w http.ResponseWriter, r *http.Requ
 		hasher = sha3.New512()
 	}
 
-	interactionRef := getHandle()
+	interactionRef := getRandomB32(15)
 
 	interactionHash := makeInteractionHash(t.ServerNonce, t.ClientNonce, interactionRef, hasher)
 
